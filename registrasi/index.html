@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PQN</title>
+  <link rel="stylesheet" href="/registrasi/scan.css" type="text/css">
+  <script>
+    console.log('Initially ' + (window.navigator.onLine ? 'on' : 'off') + 'line');
+    window.addEventListener('online', () => alert("online"));
+    window.addEventListener('offline', () => alert("offline check your connectivity"));
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"
+    integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+</head>
+
+<body>
+  <link rel="stylesheet" href="css/scan.css" type="text/css">
+  <div class="container">
+    <div class="main">
+      <center>
+        <img src="https://glyphiveborneo.github.io/logo.png" class="img-fluid" alt="QR Code untuk Pesan"
+          width="100px" />
+      </center>
+      <hr>
+      <!--  -->
+      <h2>Aktivasi Gelang:</h2>
+      <div id="video-container">
+        <video id="qr-video"></video>
+      </div>
+      <div>
+        <label class="hidediv">
+          Highlight Style
+          <select id="scan-region-highlight-style-select">
+            <option value="default-style">Default style</option>
+            <option value="example-style-1">Example custom style 1</option>
+            <option value="example-style-2">Example custom style 2</option>
+          </select>
+        </label>
+        <label>
+          <input id="show-scan-region" type="checkbox">
+          Show scan region canvas
+        </label>
+      </div>
+      <b class="hidediv">Device has camera: </b>
+      <span id="cam-has-camera" class="hidediv"></span>
+      <br>
+      <div>
+        <b class="hidediv">Preferred camera:</b>
+        <select class="hidediv" id="cam-list"></select>
+      </div>
+      <b class="hidediv">Camera has flash: </b>
+      <span id="cam-has-flash" class="hidediv"></span>
+      <div>
+        <button class="hidediv" id="flash-toggle">📸 Flash: <span id="flash-state">off</span></button>
+      </div>
+      <br>
+      <b>Detected QR code: </b>
+      <span id="cam-qr-result">None</span>
+      <br>
+      <b>Last detected at: </b>
+      <span id="cam-qr-result-timestamp"></span>
+      <br>
+      <br>
+      <center>
+        <div id="btn-scan">
+          <button type="button" id="batal" class="btn btn-danger">Batal</button>
+          <button type="button" id="scangelang" class="btn btn-primary">Scan Gelang</button>
+        </div>
+        <br>
+        <button type="button" class="btn btn-success" id="btn-aktivasi" style="width: 100%;">Aktivasi Gelang</button>
+      </center>
+      <button id="start-button" class="hidediv">Start</button>
+      <button id="stop-button" class="hidediv">Stop</button>
+      <hr>
+      <div class="container mt-5">
+        <form id="registrationForm">
+          <div class="mb-3">
+            <label for="kodeunik" class="form-label">Code Booking</label>
+            <input type="text" class="form-control" id="kodeunik" name="kodeunik" readonly required>
+          </div>
+          <div class="mb-3">
+            <label for="rentangusia" class="form-label">Jenis Pendaftar</label>
+            <input type="text" class="form-control" id="rentangusia" name="rentangusia" readonly required>
+          </div>
+          <div class="mb-3">
+            <label for="tglpenukaran" class="form-label">Tanggal Penukaran</label>
+            <input type="text" class="form-control" id="tglpenukaran" name="tglpenukaran" readonly required>
+          </div>
+          <div class="mb-3">
+            <label for="nama" class="form-label">Nama</label>
+            <input type="text" class="form-control" id="nama" name="nama" readonly required>
+          </div>
+          <div class="mb-3">
+            <label for="noktp" class="form-label">No KTP</label>
+            <input type="text" class="form-control" id="noktp" name="noktp" readonly required>
+          </div>
+          <div class="mb-3">
+            <label for="noktppendamping" class="form-label">Nomor Ktp Pendamping</label>
+            <input type="text" class="form-control" id="noktppendamping" name="noktppendamping" readonly required>
+          </div>
+          <div class="mb-3">
+            <label for="nikpendaftar" class="form-label">NIK PEndaftar</label>
+            <input type="text" class="form-control" id="nikpendaftar" name="nikpendaftar" readonly required>
+          </div>
+          <div class="mb-3">
+            <label for="kodegelang" class="form-label">Kode Gelang</label>
+            <input type="text" class="form-control" id="kodegelang" name="kodegelang" readonly required>
+          </div>
+
+        </form>
+        <div id="error-message" class="text-danger mt-3" style="display: none;">Semua inputan harus diisi!</div>
+        <br>
+
+
+
+      </div>
+      <!--  -->
+      <!-- <h2>Check-In With Name</h2>
+      <select name="" id="test">
+        <option value="1">krisna</option>
+      </select> -->
+    </div>
+  </div>
+
+  <script>
+
+    $("#btn-aktivasi").click(function () {
+      var id = $("#kodeunik").val();
+      var data = $("#kodegelang").val();
+      console.log(id + "  -  " + data)
+      var urlCek = `https://pqnbikalbar.glyphiveborneo.com/aktivasi?kodeunik=${id}&kodegelang=${data}`;
+      $.getJSON(urlCek, function (data) {
+        if (data.status) {
+          Swal.fire({
+            icon: 'success',
+            title: 'good',
+            text: data.msg,
+            confirmButtonText: 'OK'
+          }).then((result) => {
+            if (result.isConfirmed) {
+              location.reload();
+            }
+          });
+        } else {
+          Swal.fire({
+            icon: 'error',
+            title: 'Oops...',
+            text: data.msg,
+            confirmButtonText: 'OK'
+          }).then((result) => {
+            if (result.isConfirmed) {
+              location.reload();
+            }
+          });
+        }
+      });
+    });
+
+    function aktivasi(hasilscan) {
+      $("#kodegelang").val(hasilscan);
+      $("#btn-aktivasi").show();
+    }
+
+    function regis(hasilscan) {
+      console.log(status)
+      var urlCek = "https://pqnbikalbar.glyphiveborneo.com/cekkodeunik?kodeunik=" + hasilscan;
+      $.getJSON(urlCek, function (data) {
+        if (data.status) {
+          $("#kodeunik").val(data.data.kodeunik);
+          $("#rentangusia").val(data.data.rentangusia);
+          $("#tglpenukaran").val(data.data.tglpenukaran);
+          $("#nama").val(data.data.nama);
+          $("#noktp").val(data.data.noktp);
+          $("#noktppendamping").val(data.data.noktppendamping);
+          $("#nikpendaftar").val(data.data.nikpendaftar);
+        } else {
+          Swal.fire({
+            icon: 'error',
+            title: 'Oops...',
+            text: data.msg,
+            confirmButtonText: 'OK'
+          }).then((result) => {
+            if (result.isConfirmed) {
+              location.reload();
+            }
+          });
+        }
+      });
+
+    }
+
+    $(document).ready(function () {
+      $("#btn-scan").hide();
+      $("#btn-aktivasi").hide();
+
+      $('#send').click(function () {
+        var isValid = true;
+        var formData = {};
+        $('#error-message').hide();
+
+        $('#registrationForm input[required]').each(function () {
+          if ($(this).val() === '') {
+            isValid = false;
+            $('#error-message').show();
+          } else {
+            formData[$(this).attr('name')] = $(this).val();
+          }
+        });
+
+        if (isValid) {
+          console.log(JSON.stringify(formData));
+          $('#registrationForm')[0].reset();
+        }
+      });
+    });
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+    crossorigin="anonymous"></script>
+  <script type="module">
+    // https://github.com/nimiq/qr-scanner
+    import QrScanner from '/js/qr-scanner.min.js';
+
+    const video = document.getElementById('qr-video');
+    const videoContainer = document.getElementById('video-container');
+    const camHasCamera = document.getElementById('cam-has-camera');
+    const camList = document.getElementById('cam-list');
+    const camHasFlash = document.getElementById('cam-has-flash');
+    const flashToggle = document.getElementById('flash-toggle');
+    const flashState = document.getElementById('flash-state');
+    const camQrResult = document.getElementById('cam-qr-result');
+    const camQrResultTimestamp = document.getElementById('cam-qr-result-timestamp');
+    const fileSelector = document.getElementById('file-selector');
+    const fileQrResult = document.getElementById('file-qr-result');
+    var aksi = "cek"
+
+
+    $("#batal").click(function () {
+      location.reload();
+    });
+
+    $("#scangelang").click(function () {
+      scanner.start();
+      console.log("scan")
+      aksi = ""
+    });
+
+    function setResult(label, result) {
+      if (aksi === "cek") {
+        regis(result.data);
+      } else {
+        aktivasi(result.data);
+      }
+
+      scanner.stop();
+      $("#btn-scan").show();
+      label.textContent = result.data;
+      camQrResultTimestamp.textContent = new Date().toString();
+      label.style.color = 'teal';
+      clearTimeout(label.highlightTimeout);
+      label.highlightTimeout = setTimeout(() => label.style.color = 'inherit', 100);
+    }
+
+    // ####### Web Cam Scanning #######
+
+    const scanner = new QrScanner(video, result => setResult(camQrResult, result), {
+      onDecodeError: error => {
+        camQrResult.textContent = error;
+        camQrResult.style.color = 'both';
+      },
+      highlightScanRegion: true,
+      highlightCodeOutline: true,
+    });
+
+    const updateFlashAvailability = () => {
+      scanner.hasFlash().then(hasFlash => {
+        camHasFlash.textContent = hasFlash;
+        flashToggle.style.display = hasFlash ? 'inline-block' : 'none';
+      });
+    };
+
+    scanner.start().then(() => {
+      updateFlashAvailability();
+      // List cameras after the scanner started to avoid listCamera's stream and the scanner's stream being requested
+      // at the same time which can result in listCamera's unconstrained stream also being offered to the scanner.
+      // Note that we can also start the scanner after listCameras, we just have it this way around in the demo to
+      // start the scanner earlier.
+      QrScanner.listCameras(true).then(cameras => cameras.forEach(camera => {
+        const option = document.createElement('option');
+        option.value = camera.id;
+        option.text = camera.label;
+        camList.appendChild(option);
+      }));
+    });
+
+    QrScanner.hasCamera().then(hasCamera => camHasCamera.textContent = hasCamera);
+
+    // for debugging
+    window.scanner = scanner;
+
+    document.getElementById('scan-region-highlight-style-select').addEventListener('change', (e) => {
+      videoContainer.className = e.target.value;
+      scanner._updateOverlay(); // reposition the highlight because style 2 sets position: relative
+    });
+
+    document.getElementById('show-scan-region').addEventListener('change', (e) => {
+      const input = e.target;
+      const label = input.parentNode;
+      label.parentNode.insertBefore(scanner.$canvas, label.nextSibling);
+      scanner.$canvas.style.display = input.checked ? 'block' : 'none';
+    });
+
+    $("#cam-list").change(function () {
+      scanner.setCamera($("#cam-list").val()).then(updateFlashAvailability)
+    });
+
+    flashToggle.addEventListener('click', () => {
+      scanner.toggleFlash().then(() => flashState.textContent = scanner.isFlashOn() ? 'on' : 'off');
+    });
+
+    document.getElementById('start-button').addEventListener('click', () => {
+      scanner.start();
+    });
+
+    document.getElementById('stop-button').addEventListener('click', () => {
+      scanner.stop();
+    });
+  </script>
+  <script src="/registrasi/dropdown.js" type="text/javascript"></script>
+</body>
+
+</html>
