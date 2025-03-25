@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lyrics Display App</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background-color: #121212;
+            color: #e0e0e0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .sidebar {
+            height: 100vh;
+            background-color: #1a1a1a;
+            overflow-y: auto;
+            border-right: 1px solid #333;
+        }
+
+        .lyric-display {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            background-color: #121212;
+        }
+
+        .lyric-context {
+            text-align: center;
+            max-width: 90%;
+        }
+
+        .previous-lyric, .next-lyric {
+            font-size: 1.5rem;
+            color: #808080;
+            margin: 15px 0;
+            transition: all 0.3s ease;
+        }
+
+        .current-lyric {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: white;
+            margin: 20px 0;
+            transition: all 0.3s ease;
+        }
+
+        .control-button {
+            display: block;
+            width: 100%;
+            text-align: left;
+            background-color: #282828;
+            border: none;
+            color: #e0e0e0;
+            padding: 10px 15px;
+            margin-bottom: 5px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .control-button:hover {
+            background-color: #333;
+        }
+
+        .control-button.active {
+            background-color: #1DB954;
+            color: white;
+        }
+
+        #urlInput, #textarea-lyrics {
+            background-color: #282828;
+            border: 1px solid #333;
+            color: #e0e0e0;
+        }
+
+        .btn-primary {
+            background-color: #1DB954;
+            border-color: #1DB954;
+        }
+
+        .btn-primary:hover {
+            background-color: #1ed760;
+            border-color: #1ed760;
+        }
+        
+        .btn-danger {
+            background-color: #e74c3c;
+            border-color: #e74c3c;
+        }
+        
+        .btn-danger:hover {
+            background-color: #c0392b;
+            border-color: #c0392b;
+        }
+
+        .header {
+            background-color: #1a1a1a;
+            padding: 15px;
+            border-bottom: 1px solid #333;
+        }
+
+        .custom-file-upload {
+            display: inline-block;
+            padding: 6px 12px;
+            cursor: pointer;
+            background-color: #282828;
+            color: #e0e0e0;
+            border: 1px solid #333;
+            border-radius: 4px;
+        }
+
+        .spinner-border {
+            margin-right: 10px;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-4 col-lg-3 p-0 sidebar">
+                <div class="header">
+                    <h4>Lyrics Control</h4>
+                </div>
+                <div class="p-3">
+                    <div class="mb-3">
+                        <label for="textarea-lyrics" class="form-label">Paste Lyrics:</label>
+                        <textarea class="form-control" id="textarea-lyrics" rows="5" placeholder="Paste lyrics here..."></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <button id="displayTextareaLyrics" class="btn btn-primary mb-3 me-2">Display Lyrics</button>
+                        <button id="clearDisplay" class="btn btn-danger mb-3">Clear Display</button>
+                    </div>
+                    <hr>
+                    <div class="mb-3">
+                        <label for="urlInput" class="form-label">Or Load from URL:</label>
+                        <input type="url" class="form-control mb-2" id="urlInput" placeholder="https://example.com/lyrics.txt">
+                        <button id="fetchFromUrl" class="btn btn-primary mb-3">Load from URL</button>
+                    </div>
+                    <hr>
+                    <div class="mb-3">
+                        <label class="form-label">Or Upload Lyrics File:</label>
+                        <div>
+                            <label for="fileInput" class="custom-file-upload">
+                                <i class="fas fa-cloud-upload-alt"></i> Choose File
+                            </label>
+                            <input type="file" id="fileInput" style="display: none;" accept=".txt,.lrc">
+                            <span id="fileName" class="ms-2 text-muted"></span>
+                        </div>
+                    </div>
+                    <hr>
+                    <div id="loading" class="hidden">
+                        <div class="d-flex align-items-center">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <span>Loading lyrics...</span>
+                        </div>
+                    </div>
+                    <div id="lyrics-buttons-container" class="mt-4"></div>
+                </div>
+            </div>
+            
+            <!-- Main content -->
+            <div class="col-md-8 col-lg-9 p-0">
+                <div class="lyric-display">
+                    <div id="lyric-context" class="lyric-context">
+                        <div id="previous-lyric" class="previous-lyric"></div>
+                        <div id="current-lyric" class="current-lyric"></div>
+                        <div id="next-lyric" class="next-lyric"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- jQuery and Bootstrap JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        $(document).ready(function() {
+            // Function to process lyrics
+            function processLyrics(text) {
+                // Clear previous lyrics buttons and display
+                $('#lyrics-buttons-container').empty();
+                $('#current-lyric').text('Click a lyric from the sidebar to display');
+                $('#previous-lyric').text('');
+                $('#next-lyric').text('');
+                
+                // Split text into lines and filter out empty lines
+                const lines = text.split('\n').filter(line => line.trim() !== '');
+                
+                // Add each line as a button to the sidebar
+                lines.forEach((line, index) => {
+                    $('#lyrics-buttons-container').append(
+                        `<button class="control-button" data-lyric="${line}" data-index="${index}">${line}</button>`
+                    );
+                });
+                
+                // Store the lyrics array in a data attribute for easy access
+                $('#lyrics-buttons-container').data('lyrics', lines);
+                
+                // Hide loading indicator
+                $('#loading').addClass('hidden');
+            }
+            
+            // Handle textarea lyrics display
+            $('#displayTextareaLyrics').click(function() {
+                const lyrics = $('#textarea-lyrics').val().trim();
+                if (lyrics) {
+                    processLyrics(lyrics);
+                } else {
+                    alert('Please enter lyrics in the textarea');
+                }
+            });
+            
+            // Handle URL fetch
+            $('#fetchFromUrl').click(function() {
+                const url = $('#urlInput').val().trim();
+                if (url) {
+                    // Show loading indicator
+                    $('#loading').removeClass('hidden');
+                    
+                    // Fetch lyrics from URL
+                    $.ajax({
+                        url: url,
+                        type: 'GET',
+                        success: function(data) {
+                            processLyrics(data);
+                        },
+                        error: function(xhr, status, error) {
+                            $('#loading').addClass('hidden');
+                            alert('Error fetching lyrics: ' + error);
+                        }
+                    });
+                } else {
+                    alert('Please enter a valid URL');
+                }
+            });
+            
+            // Handle file upload
+            $('#fileInput').change(function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    // Show file name
+                    $('#fileName').text(file.name);
+                    
+                    // Show loading indicator
+                    $('#loading').removeClass('hidden');
+                    
+                    // Read file
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        processLyrics(event.target.result);
+                    };
+                    reader.onerror = function() {
+                        $('#loading').addClass('hidden');
+                        alert('Error reading file');
+                    };
+                    reader.readAsText(file);
+                }
+            });
+            
+            // Handle click on lyric button
+            $(document).on('click', '.control-button', function() {
+                // Get the lyrics array
+                const lyrics = $('#lyrics-buttons-container').data('lyrics');
+                
+                // Get the index of the clicked lyric
+                const currentIndex = parseInt($(this).data('index'));
+                
+                // Get the current, previous, and next lyrics
+                const currentLyric = lyrics[currentIndex];
+                const previousLyric = currentIndex > 0 ? lyrics[currentIndex - 1] : '';
+                const nextLyric = currentIndex < lyrics.length - 1 ? lyrics[currentIndex + 1] : '';
+                
+                // Display the lyrics in the main display
+                $('#current-lyric').text(currentLyric);
+                $('#previous-lyric').text(previousLyric);
+                $('#next-lyric').text(nextLyric);
+                
+                // Remove active class from all buttons
+                $('.control-button').removeClass('active');
+                
+                // Add active class to clicked button
+                $(this).addClass('active');
+            });
+            
+            // Handle clear display button
+            $('#clearDisplay').click(function() {
+                // Clear the lyric displays
+                $('#current-lyric').text('');
+                $('#previous-lyric').text('');
+                $('#next-lyric').text('');
+                
+                // Remove active class from all buttons
+                $('.control-button').removeClass('active');
+            });
+        });
+    </script>
+</body>
+</html>
